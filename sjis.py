@@ -27,42 +27,67 @@ def readbin():
 # baはbytearray
 #
 def cp932_to_utf8(ba):
-    sjis = ba.decode('cp932')
+    sjis = ba.decode('cp932',errors="ignore")
     utf = sjis.encode('utf-8')
     return utf
+0x81
+#
+# sjis すべての全角文字をutf8に変換する。
+#
+# sjis  上位 0x81 - 0x9f と 0xe0 - 0xef 
+#       下位 0x40 - 0x7e と 0x80 - 0xfc
+#
+#
 
-def sjisarea():
-    f = open("bin.bin",'w')
+def main():
+    #
+    # sjisをいれるためのbytearray
+    #
+    ba = bytearray(2)
+    #
+    # 変換テーブル書き込み用ファイルをバイナリでオープンする。
+    #
+    f = open(binf,'wb')
+    #
+    # sjis 上位開始バイト
+    #
     s1 = 0x81
     while s1 <= 0xef:
-        if ( s1 >= 0xa0 and s1 < 0xdf ) or ( s1 >= 0xf0 ) :
+        #
+        # sjis が存在しないコードは除く
+        #
+        if s1 >= 0xa0 and s1 <= 0xdf :
             s1 = s1 + 1
-            continue:
+            continue
+        #
+        # sjis 下位開始バイト
+        #
         s2 = 0x40
         while s2 <= 0xfc:
-            if s2 == 0x7f or ( s2 >= 0xfd ):
+            #
+            # sjis が存在しないコードは除く
+            #
+            if s2 == 0x7f :
                 s2 = s2 + 1
                 continue
-            h1 = hex(s1)
-            h2 = hex(s2)
-            str = h1+h2+"\n"
-            f.write(str)
+            #
+            # bytearrayにsjisをいれる
+            #
+            ba[0] = s1
+            ba[1] = s2
+            #
+            # sjisをutf8に変換する
+            #
+            utf = cp932_to_utf8(ba)
+            #
+            # バイナリをファイルに書き込む
+            #
+            utflen = len(utf)
+            if utflen == 3 :
+                f.write(utf)
+                f.write(ba)
             s2 = s2 + 1
         s1 = s1 + 1
     f.close()
 
-def main():
-    ba = bytearray(b'ba')
-    ba[0] = 0x81
-    ba[1] = 0x42
-    print(hex(ba[0]),hex(ba[1]))
-    utf = cp932_to_utf8(ba)
-    print(utf)
-    print(utf[0],utf[1],utf[2])
-    with open(binf, mode='wb') as f:
-        f.write(utf)
-        f.write(ba)
-
-#readbin()
-sjisarea()
-
+main()
