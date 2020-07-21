@@ -27,10 +27,13 @@ def readbin():
 # baはbytearray
 #
 def cp932_to_utf8(ba):
-    sjis = ba.decode('cp932',errors="ignore")
+    try:
+        sjis = ba.decode('cp932')
+    except UnicodeDecodeError:
+        return 0
     utf = sjis.encode('utf-8')
     return utf
-0x81
+
 #
 # sjis すべての全角文字をutf8に変換する。
 #
@@ -79,6 +82,12 @@ def main():
             # sjisをutf8に変換する
             #
             utf = cp932_to_utf8(ba)
+            #
+            # 変換できなかったら次へ
+            #
+            if utf == 0 :
+                s2 = s2 + 1
+                continue
             #
             # バイナリをファイルに書き込む
             #
